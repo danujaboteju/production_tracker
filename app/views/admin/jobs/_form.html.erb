@@ -1,0 +1,90 @@
+<%= form_with model: [:admin, job], class: "space-y-6" do |form| %>
+  <% if job.errors.any? %>
+    <div class="rounded-lg bg-red-100 px-4 py-3 text-red-800">
+      <h2 class="font-semibold">Please fix the following:</h2>
+      <ul class="mt-2 list-disc pl-5">
+        <% job.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="rounded-xl bg-white p-6 shadow">
+    <h2 class="mb-4 text-xl font-bold text-slate-900">Job Details</h2>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div>
+        <%= form.label :job_no, "Job No.", class: "mb-1 block text-sm font-semibold text-slate-700" %>
+        <%= form.text_field :job_no,
+            class: "w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none",
+            placeholder: "Example: SOF170822" %>
+      </div>
+
+      <div>
+        <%= form.label :customer_name, "Customer", class: "mb-1 block text-sm font-semibold text-slate-700" %>
+        <%= form.text_field :customer_name,
+            class: "w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none",
+            placeholder: "Example: M J Walsh" %>
+      </div>
+
+      <div>
+        <%= form.label :due_date, "Due Date", class: "mb-1 block text-sm font-semibold text-slate-700" %>
+        <%= form.date_field :due_date,
+            class: "w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none" %>
+      </div>
+
+      <div>
+        <%= form.label :status, "Status", class: "mb-1 block text-sm font-semibold text-slate-700" %>
+        <%= form.text_field :status,
+            value: job.status.presence || "Draft",
+            readonly: true,
+            class: "w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-600" %>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <%= form.label :notes, "Notes", class: "mb-1 block text-sm font-semibold text-slate-700" %>
+      <%= form.text_area :notes,
+          rows: 3,
+          class: "w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none",
+          placeholder: "Any job notes..." %>
+    </div>
+  </div>
+
+  <div class="rounded-xl bg-white p-6 shadow">
+    <h2 class="mb-4 text-xl font-bold text-slate-900">Required Processes</h2>
+
+    <% if job.persisted? && job.status != "Draft" %>
+      <div class="mb-4 rounded-lg bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+        This job has already been released. Changing processes now may affect the production pipeline.
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <% JobProcess::PROCESS_OPTIONS.each do |code, name| %>
+        <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 hover:bg-slate-50">
+          <%= check_box_tag "process_codes[]",
+              code,
+              @selected_process_codes&.include?(code),
+              class: "h-5 w-5 rounded border-slate-300 text-blue-600" %>
+
+          <div>
+            <div class="font-semibold text-slate-900"><%= code %></div>
+            <div class="text-sm text-slate-600"><%= name %></div>
+          </div>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <% cancel_path = job.persisted? ? admin_job_path(job) : admin_jobs_path %>
+
+    <%= link_to "Cancel", cancel_path,
+        class: "rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
+
+    <%= form.submit job.persisted? ? "Update Job" : "Create Job Pipeline",
+        class: "rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" %>
+  </div>
+<% end %>

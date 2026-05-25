@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  job: one
+  process_code: MyString
+  process_name: MyString
+  status: MyString
+  posted_at: 2026-05-19 11:28:37
+  completed_at: 2026-05-19 11:28:37
+  hold_reason: MyText
+  operator_note: MyText
+
+two:
+  job: two
+  process_code: MyString
+  process_name: MyString
+  status: MyString
+  posted_at: 2026-05-19 11:28:37
+  completed_at: 2026-05-19 11:28:37
+  hold_reason: MyText
+  operator_note: MyText

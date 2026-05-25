@@ -1,0 +1,171 @@
+<div class="min-h-screen bg-slate-100 p-6">
+  <div class="mx-auto max-w-5xl">
+    <% if notice.present? %>
+      <div class="mb-4 rounded-lg bg-green-100 px-4 py-3 text-green-800">
+        <%= notice %>
+      </div>
+    <% end %>
+
+    <% if alert.present? %>
+      <div class="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-800">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <div class="mb-6">
+      <%= link_to "← Back to Jobs", admin_jobs_path,
+          class: "text-sm font-semibold text-blue-700 hover:text-blue-900" %>
+
+      <div class="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900"><%= @job.job_no %></h1>
+          <p class="mt-1 text-slate-600"><%= @job.customer_name %></p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white">
+            <%= @job.status %>
+          </span>
+
+          <%= link_to "Edit Job", edit_admin_job_path(@job),
+              class: "rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" %>
+
+          <% if @job.status == "Draft" %>
+            <%= button_to "Release Job",
+                release_admin_job_path(@job),
+                method: :patch,
+                form_class: "inline-block",
+                form: {
+                  data: {
+                    turbo_confirm: "Release this job to production?"
+                  }
+                },
+                class: "cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90",
+                style: "background-color: #7c3aed; color: white; cursor: pointer;" %>
+          <% end %>
+
+          <%= button_to "Delete Job",
+              admin_job_path(@job),
+              method: :delete,
+              form_class: "inline-block",
+              form: {
+                data: {
+                  turbo_confirm: "Are you sure you want to delete this job? This will also delete its job processes."
+                }
+              },
+              class: "cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90",
+              style: "background-color: #dc2626; color: white; cursor: pointer;" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6 rounded-xl bg-white p-6 shadow">
+      <h2 class="mb-4 text-xl font-bold text-slate-900">Job Details</h2>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <div class="text-sm font-semibold text-slate-500">Job No.</div>
+          <div class="mt-1 text-slate-900"><%= @job.job_no %></div>
+        </div>
+
+        <div>
+          <div class="text-sm font-semibold text-slate-500">Customer</div>
+          <div class="mt-1 text-slate-900"><%= @job.customer_name %></div>
+        </div>
+
+        <div>
+          <div class="text-sm font-semibold text-slate-500">Due Date</div>
+          <div class="mt-1 text-slate-900"><%= @job.due_date&.strftime("%d/%m/%Y") %></div>
+        </div>
+      </div>
+
+      <% if @job.notes.present? %>
+        <div class="mt-4">
+          <div class="text-sm font-semibold text-slate-500">Notes</div>
+          <div class="mt-1 whitespace-pre-line text-slate-900"><%= @job.notes %></div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="rounded-xl bg-white p-6 shadow">
+      <h2 class="mb-4 text-xl font-bold text-slate-900">Job Pipeline</h2>
+
+      <div class="overflow-hidden rounded-lg border border-slate-200">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-900 text-white">
+            <tr>
+              <th class="px-4 py-3 text-left text-sm font-semibold">Process Code</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold">Process Name</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold">Posted</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold">Completed</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-200">
+            <% @job.job_processes.order(:id).each do |process| %>
+              <tr>
+                <td class="px-4 py-3 font-semibold text-slate-900">
+                  <%= process.process_code %>
+                </td>
+
+                <td class="px-4 py-3 text-slate-700">
+                  <%= process.process_name %>
+                </td>
+
+                <td class="px-4 py-3">
+                  <% status_class =
+                    case process.status
+                    when "Posted"
+                      "bg-blue-100 text-blue-800"
+                    when "In Progress"
+                      "bg-yellow-100 text-yellow-800"
+                    when "Completed"
+                      "bg-green-100 text-green-800"
+                    when "On Hold"
+                      "bg-orange-100 text-orange-800"
+                    when "Cancelled"
+                      "bg-red-100 text-red-800"
+                    else
+                      "bg-slate-200 text-slate-700"
+                    end
+                  %>
+
+                  <span class="rounded-full px-3 py-1 text-xs font-semibold <%= status_class %>">
+                    <%= process.status %>
+                  </span>
+                </td>
+
+                <td class="px-4 py-3 text-slate-700">
+                  <%= process.posted_at&.strftime("%d/%m/%Y %I:%M %p") || "-" %>
+                </td>
+
+                <td class="px-4 py-3 text-slate-700">
+                  <%= process.completed_at&.strftime("%d/%m/%Y %I:%M %p") || "-" %>
+                </td>
+              </tr>
+            <% end %>
+
+            <% if @job.job_processes.empty? %>
+              <tr>
+                <td colspan="5" class="px-4 py-8 text-center text-slate-500">
+                  No processes selected for this job.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @job.status == "Draft" %>
+        <div class="mt-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          This job is still in Draft. Release it when it is ready for production.
+        </div>
+      <% else %>
+        <div class="mt-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+          This job has been released to production.
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

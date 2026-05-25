@@ -1,0 +1,108 @@
+<div class="min-h-screen bg-slate-100 p-6">
+  <div class="mx-auto max-w-7xl">
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">Production Tracker</h1>
+        <p class="mt-1 text-slate-600">Admin Job Pipeline</p>
+      </div>
+
+      <div class="flex gap-2">
+        <%= link_to "Pipeline", admin_pipeline_path,
+            class: "rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700" %>
+
+        <%= link_to "Create New Job", new_admin_job_path,
+            class: "rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" %>
+      </div>
+    </div>
+
+    <% if notice.present? %>
+      <div class="mb-4 rounded-lg bg-green-100 px-4 py-3 text-green-800">
+        <%= notice %>
+      </div>
+    <% end %>
+
+    <% if alert.present? %>
+      <div class="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-800">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <div class="overflow-hidden rounded-xl bg-white shadow">
+      <table class="min-w-full divide-y divide-slate-200">
+        <thead class="bg-slate-900 text-white">
+          <tr>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Job No.</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Customer</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Due Date</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Processes</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Action</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-200">
+          <% @jobs.each do |job| %>
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3 font-semibold text-slate-900">
+                <%= job.job_no %>
+              </td>
+
+              <td class="px-4 py-3 text-slate-700">
+                <%= job.customer_name %>
+              </td>
+
+              <td class="px-4 py-3 text-slate-700">
+                <%= job.due_date&.strftime("%d/%m/%Y") %>
+              </td>
+
+              <td class="px-4 py-3">
+                <% job_status_class =
+                  case job.status
+                  when "Released"
+                    "bg-blue-100 text-blue-800"
+                  when "In Progress"
+                    "bg-yellow-100 text-yellow-800"
+                  when "Completed"
+                    "bg-green-100 text-green-800"
+                  when "On Hold"
+                    "bg-orange-100 text-orange-800"
+                  when "Cancelled"
+                    "bg-red-100 text-red-800"
+                  else
+                    "bg-slate-200 text-slate-700"
+                  end
+                %>
+
+                <span class="rounded-full px-3 py-1 text-xs font-semibold <%= job_status_class %>">
+                  <%= job.status %>
+                </span>
+              </td>
+
+              <td class="px-4 py-3 text-slate-700">
+                <%= job.process_codes %>
+              </td>
+
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <%= link_to "Open", admin_job_path(job),
+                      class: "rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
+
+                  <%= link_to "Edit", edit_admin_job_path(job),
+                      class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+
+          <% if @jobs.empty? %>
+            <tr>
+              <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+                No jobs created yet.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<div class="min-h-screen bg-slate-100 p-6">
+  <div class="mx-auto max-w-4xl">
+    <div class="mb-6">
+      <%= link_to "← Back to Job", admin_job_path(@job),
+          class: "text-sm font-semibold text-blue-700 hover:text-blue-900" %>
+
+      <h1 class="mt-4 text-3xl font-bold text-slate-900">Edit Job</h1>
+      <p class="mt-1 text-slate-600">
+        Update job details and required processes.
+      </p>
+    </div>
+
+    <%= render "form", job: @job %>
+  </div>
+</div>
