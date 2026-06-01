@@ -27,6 +27,23 @@
       </div>
     <% end %>
 
+<div class="mb-4 rounded-xl bg-white p-3 shadow">
+  <div class="flex flex-wrap gap-2">
+    <% @status_tabs.each do |label, status| %>
+      <% active = @status.to_s == status.to_s %>
+      <% count = status.present? ? @status_counts.fetch(status, 0) : @all_jobs_count %>
+
+      <%= link_to admin_jobs_path(status: status),
+          class: "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold #{active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" do %>
+        <span><%= label %></span>
+        <span class="rounded-full px-2 py-0.5 text-xs <%= active ? 'bg-white/20 text-white' : 'bg-white text-slate-600' %>">
+          <%= count %>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
     <div class="overflow-hidden rounded-xl bg-white shadow">
       <table class="min-w-full divide-y divide-slate-200">
         <thead class="bg-slate-900 text-white">
@@ -56,30 +73,92 @@
               </td>
 
               <td class="px-4 py-3">
-                <% job_status_class =
-                  case job.status
-                  when "Released"
-                    "bg-blue-100 text-blue-800"
-                  when "In Progress"
-                    "bg-yellow-100 text-yellow-800"
-                  when "Completed"
-                    "bg-green-100 text-green-800"
-                  when "On Hold"
-                    "bg-orange-100 text-orange-800"
-                  when "Cancelled"
-                    "bg-red-100 text-red-800"
-                  else
-                    "bg-slate-200 text-slate-700"
-                  end
-                %>
-
-                <span class="rounded-full px-3 py-1 text-xs font-semibold <%= job_status_class %>">
+                <span class="rounded-full px-3 py-1 text-xs font-semibold <%= job_status_badge_class(job.status) %>">
                   <%= job.status %>
                 </span>
               </td>
 
               <td class="px-4 py-3 text-slate-700">
-                <%= job.process_codes %>
+                <% processes = job.job_processes.to_a.sort_by { |process| [process.stage_no || 999, process.id || 0] } %>
+                <% completed_count = job.status.in?(["Completed", "Cancelled"]) ? processes.size : processes.count { |process| process.status == "Completed" } %>
+                <% total_count = processes.size %>
+                <% progress_percent = total_count.positive? ? ((completed_count.to_f / total_count) * 100).round : 0 %>
+                <% current_process = processes.find { |process| !process.status.in?(["Completed", "Cancelled"]) } %>
+                <% current_text =
+                  if job.status == "Completed"
+                    "Completed"
+                  elsif job.status == "Cancelled"
+                    "Cancelled"
+                  elsif current_process.present?
+                    "Current: #{current_process.process_name}"
+                  else
+                    "Current: No processes"
+                  end
+                %>
+                <% process_labels = {
+                  "PRODRAFT" => "Draft",
+                  "PROCUT" => "Cut",
+                  "PENTL" => "Tube",
+                  "PENTLMS" => "Tube",
+                  "PROFL" => "Laser",
+                  "PROFLMS" => "Laser",
+                  "PROFLAL" => "Laser",
+                  "PROFLSS" => "Laser",
+                  "PROPB" => "Bend",
+                  "PRODRILL" => "Drill",
+                  "PROFAB" => "Fab",
+                  "PROGUIL" => "Guil",
+                  "PROPRIME" => "Prime",
+                  "PENPRIME" => "Prime",
+                  "PENRIME" => "Prime",
+                  "PRORO" => "Roll",
+                  "PROPAINTYELLOW" => "Paint",
+                  "GAS" => "Galv",
+                  "PRODEL" => "Del"
+                } %>
+
+                <div class="w-full min-w-[280px] max-w-[460px] space-y-1.5">
+                  <div class="text-[11px] font-semibold text-slate-700">
+                    <%= completed_count %> / <%= total_count %> (<%= progress_percent %>%) &middot; <%= current_text %>
+                  </div>
+
+                  <% if processes.any? %>
+                    <div class="space-y-1">
+                      <div class="grid gap-1" style="grid-template-columns: repeat(<%= processes.size %>, minmax(0, 1fr));">
+                        <% processes.each do |process| %>
+                          <% segment_color =
+                            if job.status == "Cancelled" || process.status == "Cancelled"
+                              "#ef4444"
+                            elsif job.status == "On Hold" || process.status == "On Hold"
+                              "#3b82f6"
+                            elsif job.status == "Completed" || process.status == "Completed"
+                              "#22c55e"
+                            elsif process == current_process || process.status.in?(["In Progress", "Partially Completed"])
+                              "#facc15"
+                            else
+                              "#e5e7eb"
+                            end
+                          %>
+
+                          <div class="rounded-full" style="background-color: <%= segment_color %>; display: block; width: 100%; height: 6px; min-height: 6px;"></div>
+                        <% end %>
+                      </div>
+
+                      <div class="grid gap-1" style="grid-template-columns: repeat(<%= processes.size %>, minmax(0, 1fr));">
+                        <% processes.each do |process| %>
+                          <div
+                            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-center text-[4px] font-medium leading-[4px] text-slate-500"
+                            title="<%= process.process_name %>">
+                            <%= process_labels.fetch(process.process_code, process.process_code) %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% else %>
+                    <div class="h-2 rounded-full" style="background-color: #e5e7eb; height: 8px;"></div>
+                    <div class="text-[10px] font-medium leading-3 text-slate-400">No processes</div>
+                  <% end %>
+                </div>
               </td>
 
               <td class="px-4 py-3">
@@ -87,8 +166,10 @@
                   <%= link_to "Open", admin_job_path(job),
                       class: "rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
 
-                  <%= link_to "Edit", edit_admin_job_path(job),
-                      class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
+                  <% if job.status == "Draft" %>
+                    <%= link_to "Edit", edit_admin_job_path(job),
+                        class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
+                  <% end %>
                 </div>
               </td>
             </tr>
@@ -102,7 +183,15 @@
             </tr>
           <% end %>
         </tbody>
+
       </table>
+      <div class="flex flex-wrap gap-4 px-4 py-3 text-xs text-slate-600">
+        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-green-500"></span>Green = Completed</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-yellow-400"></span>Yellow = In Progress</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-slate-200"></span>Grey = Pending</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-red-500"></span>Red = Cancelled</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-blue-500"></span>Blue = On Hold</span>
+      </div>
     </div>
   </div>
 </div>

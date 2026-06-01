@@ -90,14 +90,18 @@ production:
     database: production_tracker_production
     username: laser
     password: "170725"
+    host: 127.0.0.1
+
   cache:
     <<: *primary_production
     database: production_tracker_production_cache
     migrations_paths: db/cache_migrate
+
   queue:
     <<: *primary_production
     database: production_tracker_production_queue
     migrations_paths: db/queue_migrate
+
   cable:
     <<: *primary_production
     database: production_tracker_production_cable

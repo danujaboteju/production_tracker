@@ -4,45 +4,32 @@ class JobProcess < ApplicationRecord
   PROCESS_OPTIONS = {
     "PRODRAFT" => "Drafting",
     "PROCUT" => "Miter Saw Cutting",
-    "PENTLMS" => "Tube Laser - Mild Steel",
-    "PROFLMS" => "Flat Bed Laser - Mild Steel",
+    "PENTL" => "Tube Laser",
+    "PROFL" => "Flat Bed Laser",
     "PROPB" => "Press Brake",
     "PRODRILL" => "Drilling / Punching",
     "PROFAB" => "Fabrication / Assembly",
-    "PROFLAL" => "Flat Bed Laser - Aluminium",
-    "PROFLSS" => "Flat Bed Laser - Stainless Steel",
     "PROGUIL" => "Guillotine",
     "PROPRIME" => "Priming",
-    "PENPRIME" => "Penrith Priming",
+    "PENRIME" => "Penrith Priming",
     "PRORO" => "Rolling",
     "PROPAINTYELLOW" => "Yellow Enamel Painting",
     "GAS" => "Galvanizing",
     "PRODEL" => "Delivery"
   }.freeze
 
-  PROCESS_STAGES = {
-    "PRODRAFT" => 1,
-
-    "PROCUT" => 2,
-    "PENTLMS" => 2,
-    "PROFLMS" => 2,
-    "PROFLAL" => 2,
-    "PROFLSS" => 2,
-    "PROGUIL" => 2,
-
-    "PROPB" => 3,
-    "PRORO" => 3,
-
-    "PROFAB" => 4,
-    "PRODRILL" => 4,
-
-    "PROPRIME" => 5,
-    "PENPRIME" => 5,
-    "PROPAINTYELLOW" => 5,
-    "GAS" => 5,
-
-    "PRODEL" => 6
+  STAGE_MAP = {
+    1 => ["PRODRAFT"],
+    2 => ["PROCUT", "PENTL", "PROFL", "PROGUIL"],
+    3 => ["PROPB", "PRORO"],
+    4 => ["PROFAB", "PRODRILL"],
+    5 => ["PROPRIME", "PENRIME", "PROPAINTYELLOW", "GAS"],
+    6 => ["PRODEL"]
   }.freeze
+
+  PROCESS_STAGES = STAGE_MAP.each_with_object({}) do |(stage_no, process_codes), stages|
+    process_codes.each { |process_code| stages[process_code] = stage_no }
+  end.freeze
 
   STAGE_NAMES = {
     1 => "Drafting",
@@ -55,7 +42,6 @@ class JobProcess < ApplicationRecord
 
   STATUSES = [
     "Draft",
-    "Waiting",
     "Posted",
     "In Progress",
     "Partially Completed",
@@ -83,14 +69,18 @@ class JobProcess < ApplicationRecord
     STAGE_NAMES[stage_no]
   end
 
+  def stage
+    self.class.stage_no_for(process_code)
+  end
+
   def stage_name
-    self.class.stage_name_for(stage_no)
+    self.class.stage_name_for(stage)
   end
 
   private
 
   def set_process_name_and_stage_no
     self.process_name = self.class.process_name_for(process_code)
-    self.stage_no = self.class.stage_no_for(process_code)
+    self.stage_no = stage
   end
 end

@@ -8,6 +8,16 @@ Rails.application.routes.draw do
       member do
         patch :release
       end
+
+      resources :job_processes, only: [] do
+        member do
+          patch :start
+          patch :complete
+          patch :hold
+          patch :resume
+          patch :reopen
+        end
+      end
     end
   end
 end

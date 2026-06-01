@@ -22,71 +22,80 @@ class Job < ApplicationRecord
     return false unless status == "Draft"
 
     transaction do
-      update!(status: "Released")
+      update!(status: "In Progress")
 
-      job_processes.update_all(
-        status: "Waiting",
-        posted_at: nil,
-        started_at: nil,
+      job_processes.where(status: "Draft").update_all(
+        status: "Posted",
+        posted_at: Time.current,
         completed_at: nil,
+        hold_reason: nil,
         updated_at: Time.current
       )
 
-      unlock_next_stage!
-      refresh_status!
+      start_next_posted_stage!
     end
 
     true
   end
 
-  def unlock_next_stage!
-    active_processes = job_processes.where.not(status: ["Cancelled"])
+  def complete!
+    transaction do
+      update!(status: "Completed")
 
-    return if active_processes.empty?
+      now = Time.current
 
-    incomplete_processes = active_processes.where.not(status: "Completed")
-
-    return if incomplete_processes.empty?
-
-    next_stage_no = incomplete_processes.minimum(:stage_no)
-
-    return if next_stage_no.blank?
-
-    job_processes
-      .where(stage_no: next_stage_no, status: "Waiting")
-      .update_all(
-        status: "Posted",
-        posted_at: Time.current,
-        updated_at: Time.current
-      )
+      job_processes.find_each do |process|
+        process.update!(
+          status: "Completed",
+          posted_at: process.posted_at || now,
+          completed_at: process.completed_at || now,
+          hold_reason: nil
+        )
+      end
+    end
   end
 
-  def refresh_status!
-    processes = job_processes.to_a
+  def advance_after_process_completed!
+    transaction do
+      if job_processes.where.not(status: ["Completed", "Cancelled"]).exists?
+        start_next_posted_stage! unless job_processes.where(status: ["In Progress", "On Hold"]).exists?
+        refresh_progress_status!
+      else
+        update!(status: "Completed")
+      end
+    end
+  end
 
-    return update!(status: "Draft") if processes.empty?
+  def start_next_posted_stage!
+    next_stage_no = job_processes.where(status: "Posted").minimum(:stage_no)
+    return if next_stage_no.blank?
 
-    statuses = processes.map(&:status)
+    job_processes.where(status: "Posted", stage_no: next_stage_no).update_all(
+      status: "In Progress",
+      updated_at: Time.current
+    )
+  end
 
-    new_status =
-      if statuses.all? { |status| status == "Draft" }
-        "Draft"
-      elsif statuses.any? { |status| status == "On Hold" }
-        "On Hold"
-      elsif statuses.all? { |status| status == "Completed" }
+  def ordered_job_processes
+    job_processes.order(:stage_no, :id).to_a
+  end
+
+  def refresh_progress_status!
+    return if status.in?(["Draft", "Completed", "Cancelled"])
+
+    active_processes = job_processes.where.not(status: "Cancelled")
+
+    progress_status =
+      if active_processes.exists? && active_processes.where.not(status: "Completed").none?
         "Completed"
-      elsif statuses.any? { |status| status == "In Progress" }
+      elsif job_processes.where(status: ["In Progress", "Partially Completed", "Completed", "On Hold"]).exists?
         "In Progress"
-      elsif statuses.any? { |status| status == "Posted" }
-        "Released"
-      elsif statuses.any? { |status| status == "Waiting" }
-        "Released"
-      elsif statuses.all? { |status| status == "Cancelled" }
-        "Cancelled"
+      elsif job_processes.where(status: "Posted").exists?
+        "In Progress"
       else
         status
       end
 
-    update!(status: new_status) if status != new_status
+    update!(status: progress_status) if progress_status != status
   end
 end

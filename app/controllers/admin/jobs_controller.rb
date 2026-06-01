@@ -3,7 +3,19 @@ module Admin
     before_action :set_job, only: [:show, :edit, :update, :release, :destroy]
 
     def index
+      @status = params[:status].presence
+      @status_tabs = [
+        ["All Jobs", nil],
+        ["Released", "Released"],
+        ["In Progress", "In Progress"],
+        ["On Hold", "On Hold"],
+        ["Completed", "Completed"]
+      ]
+      @status_counts = Job.group(:status).count
+      @all_jobs_count = Job.count
+
       @jobs = Job.includes(:job_processes).order(created_at: :desc)
+      @jobs = @jobs.where(status: @status) if @status.present?
     end
 
     def new
@@ -16,7 +28,7 @@ module Admin
     end
 
     def create
-      @job = Job.new(job_params)
+      @job = Job.new(job_params.except(:status))
       @job.status = "Draft"
 
       @selected_process_codes = selected_process_codes
@@ -54,31 +66,42 @@ module Admin
     def update
       @selected_process_codes = selected_process_codes
 
-      if @selected_process_codes.empty?
+      if status_only_update? && !manual_job_status?
+        redirect_to admin_job_path(@job), alert: "Job status can only be manually set to On Hold, Completed, or Cancelled."
+        return
+      end
+
+      if syncing_processes? && @selected_process_codes.empty?
         @job.errors.add(:base, "Please select at least one process.")
         render :edit, status: :unprocessable_entity
         return
       end
 
-      ActiveRecord::Base.transaction do
-        @job.update!(job_params)
-        sync_job_processes(@job, @selected_process_codes)
+      if status_only_update? && params.dig(:job, :status) == "Completed"
+        @job.complete!
+      else
+        ActiveRecord::Base.transaction do
+          @job.update!(job_params)
+          sync_job_processes(@job, @selected_process_codes) if syncing_processes?
+        end
       end
 
       redirect_to admin_job_path(@job), notice: "Job updated successfully."
     rescue ActiveRecord::RecordInvalid
-      render :edit, status: :unprocessable_entity
+      if syncing_processes?
+        render :edit, status: :unprocessable_entity
+      else
+        redirect_to admin_job_path(@job), alert: "Job could not be updated."
+      end
     end
 
     def release
-      @job = Job.find(params[:id])
-
       if @job.release!
-      redirect_to admin_job_path(@job), notice: "Job released successfully."
+        redirect_to admin_job_path(@job), notice: "Job released successfully."
       else
-      redirect_to admin_job_path(@job), alert: "Only Draft jobs can be released."
+        redirect_to admin_job_path(@job), alert: "Only Draft jobs can be released."
       end
-    end 
+    end
 
     def destroy
       job_no = @job.job_no
@@ -86,7 +109,7 @@ module Admin
 
       redirect_to admin_jobs_path, notice: "Job #{job_no} was deleted successfully."
     end
-    
+
     private
 
     def set_job
@@ -98,12 +121,25 @@ module Admin
         :job_no,
         :customer_name,
         :due_date,
+        :status,
         :notes
       )
     end
 
     def selected_process_codes
       Array(params[:process_codes]).reject(&:blank?).uniq
+    end
+
+    def syncing_processes?
+      params.dig(:job, :job_no).present? || params.key?(:process_codes)
+    end
+
+    def status_only_update?
+      params.dig(:job, :status).present? && !syncing_processes?
+    end
+
+    def manual_job_status?
+      params.dig(:job, :status).in?(["On Hold", "Completed", "Cancelled"])
     end
 
     def sync_job_processes(job, process_codes)
