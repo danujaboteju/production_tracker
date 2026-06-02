@@ -16,98 +16,100 @@
       <%= link_to "&larr; Back to Jobs".html_safe, admin_jobs_path,
           class: "text-sm font-semibold text-blue-700 hover:text-blue-900" %>
 
-<% job_status_style =
-  case @job.status
-  when "Completed"
-    "background-color: #dcfce7; color: #166534;"
-  when "In Progress"
-    "background-color: #fef3c7; color: #92400e;"
-  when "On Hold"
-    "background-color: #f3e8ff; color: #6b21a8;"
-  when "Released"
-    "background-color: #dbeafe; color: #1e40af;"
-  when "Cancelled"
-    "background-color: #fee2e2; color: #991b1b;"
-  else
-    "background-color: #e2e8f0; color: #334155;"
-  end
-%>
+      <% job_status_style =
+        case @job.status
+        when "Completed"
+          "background-color: #dcfce7; color: #166534;"
+        when "In Progress"
+          "background-color: #fef3c7; color: #92400e;"
+        when "On Hold"
+          "background-color: #f3e8ff; color: #6b21a8;"
+        when "Released"
+          "background-color: #dbeafe; color: #1e40af;"
+        when "Cancelled"
+          "background-color: #fee2e2; color: #991b1b;"
+        else
+          "background-color: #e2e8f0; color: #334155;"
+        end
+      %>
 
-  <div class="mt-4">
-    <div class="flex flex-wrap items-center gap-3">
-      <h1 class="text-3xl font-bold text-slate-900"><%= @job.job_no %></h1>
-      <span class="rounded-full px-3 py-1 text-xs font-semibold" style="<%= job_status_style %>">
-        <%= @job.status %>
-      </span>
-    </div>
+      <% job_closed = @job.status.in?(["Completed", "Cancelled"]) %>
 
-    <p class="mt-1 text-slate-600"><%= @job.customer_name %></p>
+      <div class="mt-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-3xl font-bold text-slate-900"><%= @job.job_no %></h1>
 
-    <% unless @job.status == "Completed" %>\n      <div class="mt-4 flex flex-wrap items-center gap-2">
-      <% unless @job.status == "On Hold" %>
-        <%= button_to "Put Job On Hold",
-            admin_job_path(@job, job: { status: "On Hold" }),
-            method: :patch,
-            form_class: "inline-block",
-            class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
-      <% end %>
-
-      <% unless @job.status == "Completed" %>
-        <%= button_to "Mark Job Completed",
-            admin_job_path(@job, job: { status: "Completed" }),
-            method: :patch,
-            form_class: "inline-block",
-            form: { data: { turbo_confirm: "Mark this job as completed?" } },
-            class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
-      <% end %>
-
-      <% unless @job.status == "Cancelled" %>
-        <%= button_to "Cancel Job",
-            admin_job_path(@job, job: { status: "Cancelled" }),
-            method: :patch,
-            form_class: "inline-block",
-            form: { data: { turbo_confirm: "Cancel this job?" } },
-            class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
-      <% end %>
-
-      <% if @job.status == "Draft" %>
-        <%= link_to "Edit Job", edit_admin_job_path(@job),
-            class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
-
-        <%= button_to "Release Job",
-            release_admin_job_path(@job),
-            method: :patch,
-            form_class: "inline-block",
-            form: { data: { turbo_confirm: "Release this job to production?" } },
-            class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
-      <% end %>
-
-    <%= button_to "Delete Job",
-        admin_job_path(@job),
-        method: :delete,
-        form_class: "inline-block",
-        form: { data: { turbo_confirm: "Are you sure you want to delete this job? This will also delete its job processes." } },
-        class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
-  </div>
-<% end %>
-
-        <div>
-          <div class="text-sm font-semibold text-slate-500">Customer</div>
-          <div class="mt-1 text-slate-900"><%= @job.customer_name %></div>
+          <span class="rounded-full px-3 py-1 text-xs font-semibold" style="<%= job_status_style %>">
+            <%= @job.status %>
+          </span>
         </div>
 
-        <div>
-          <div class="text-sm font-semibold text-slate-500">Due Date</div>
-          <div class="mt-1 text-slate-900"><%= @job.due_date&.strftime("%d/%m/%Y") || "-" %></div>
+        <div class="mt-5 grid gap-y-3" style="grid-template-columns: minmax(260px, max-content) max-content; column-gap: 4rem;">
+          <div>
+            <div class="text-sm font-semibold text-slate-500">Customer</div>
+            <div class="mt-1 text-slate-900"><%= @job.customer_name %></div>
+          </div>
+
+          <div>
+            <div class="text-sm font-semibold text-slate-500">Due Date</div>
+            <div class="mt-1 text-slate-900"><%= @job.due_date&.strftime("%d/%m/%Y") || "-" %></div>
+          </div>
+        </div>
+
+        <% if @job.notes.present? %>
+          <div class="mt-4">
+            <div class="text-sm font-semibold text-slate-500">Notes</div>
+            <div class="mt-1 whitespace-pre-line text-slate-900"><%= @job.notes %></div>
+          </div>
+        <% end %>
+
+        <div class="flex flex-wrap items-center gap-2" style="margin-top: 32px;">
+          <% unless job_closed || @job.status == "On Hold" %>
+            <%= button_to "Put Job On Hold",
+                admin_job_path(@job, job: { status: "On Hold" }),
+                method: :patch,
+                form_class: "inline-block",
+                class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
+          <% end %>
+
+          <% unless job_closed %>
+            <%= button_to "Mark Job Completed",
+                admin_job_path(@job, job: { status: "Completed" }),
+                method: :patch,
+                form_class: "inline-block",
+                form: { data: { turbo_confirm: "Mark this job as completed?" } },
+                class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
+          <% end %>
+
+          <% unless job_closed %>
+            <%= button_to "Cancel Job",
+                admin_job_path(@job, job: { status: "Cancelled" }),
+                method: :patch,
+                form_class: "inline-block",
+                form: { data: { turbo_confirm: "Cancel this job?" } },
+                class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
+          <% end %>
+
+          <% if @job.status == "Draft" %>
+            <%= link_to "Edit Job", edit_admin_job_path(@job),
+                class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
+
+            <%= button_to "Release Job",
+                release_admin_job_path(@job),
+                method: :patch,
+                form_class: "inline-block",
+                form: { data: { turbo_confirm: "Release this job to production?" } },
+                class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
+          <% end %>
+
+          <%= button_to "Delete Job",
+              admin_job_path(@job),
+              method: :delete,
+              form_class: "inline-block",
+              form: { data: { turbo_confirm: "Are you sure you want to delete this job? This will also delete its job processes." } },
+              class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
         </div>
       </div>
-
-      <% if @job.notes.present? %>
-        <div class="mt-4">
-          <div class="text-sm font-semibold text-slate-500">Notes</div>
-          <div class="mt-1 whitespace-pre-line text-slate-900"><%= @job.notes %></div>
-        </div>
-      <% end %>
     </div>
 
     <div class="rounded-xl bg-white p-6 shadow">
@@ -124,7 +126,7 @@
         <% end %>
       </div>
 
-      <% processes = @job.job_processes.to_a.sort_by { |process| [process.stage || process.stage_no || 999, process.id] } %>
+      <% processes = @job.job_processes.to_a.sort_by { |process| [process.stage || process.stage_no || 999, process.id || 0] } %>
       <% processes_by_stage = processes.group_by { |process| process.stage || process.stage_no } %>
 
       <% if processes.any? %>
