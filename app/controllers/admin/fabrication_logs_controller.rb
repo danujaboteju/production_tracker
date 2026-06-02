@@ -14,6 +14,16 @@ module Admin
       end
     end
 
+    def update
+      fabrication_log = @job_process.fabrication_logs.find(params[:id])
+
+      if fabrication_log.update(fabrication_log_params)
+        redirect_to admin_job_path(@job), notice: "Fabrication log updated successfully."
+      else
+        redirect_to admin_job_path(@job), alert: fabrication_log.errors.full_messages.to_sentence
+      end
+    end
+
     def destroy
       @job_process.fabrication_logs.find(params[:id]).destroy!
 
