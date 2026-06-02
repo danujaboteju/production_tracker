@@ -92,3 +92,76 @@
     <% end %>
   </div>
 </div>
+
+<% if process.stage_no == 4 %>
+  <div class="border-t border-slate-200 px-4 py-4" style="background-color: #f8fafc;">
+    <h4 class="text-sm font-bold text-slate-900">Fabrication / Welding Log</h4>
+
+    <%= form_with model: [:admin, job, process, FabricationLog.new], local: true, class: "mt-3 grid gap-2 md:grid-cols-[9rem_8rem_8rem_1fr_1.5fr_auto] md:items-end" do |form| %>
+      <div>
+        <%= form.label :work_date, "Date", class: "block text-xs font-semibold text-slate-600" %>
+        <%= form.date_field :work_date, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-2 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= form.label :start_time, "Start Time", class: "block text-xs font-semibold text-slate-600" %>
+        <%= form.time_field :start_time, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-2 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= form.label :end_time, "End Time", class: "block text-xs font-semibold text-slate-600" %>
+        <%= form.time_field :end_time, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-2 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= form.label :fabricator_name, "Fabricator / Welder", class: "block text-xs font-semibold text-slate-600" %>
+        <%= form.text_field :fabricator_name, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-2 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= form.label :note, "Note", class: "block text-xs font-semibold text-slate-600" %>
+        <%= form.text_field :note, class: "mt-1 w-full rounded-md border border-slate-300 px-2 py-2 text-sm" %>
+      </div>
+
+      <%= form.submit "Add Log", class: "cursor-pointer rounded-md px-3 py-2 text-sm font-semibold text-white hover:opacity-90", style: "background-color: #334155; color: white; cursor: pointer;" %>
+    <% end %>
+
+    <% if process.fabrication_logs.any? %>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+          <thead>
+            <tr class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th class="px-2 py-2">Date</th>
+              <th class="px-2 py-2">Start Time</th>
+              <th class="px-2 py-2">End Time</th>
+              <th class="px-2 py-2">Fabricator / Welder</th>
+              <th class="px-2 py-2">Note</th>
+              <th class="px-2 py-2 text-right"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <% process.fabrication_logs.sort_by { |log| [log.work_date, log.start_time] }.reverse_each do |log| %>
+              <tr>
+                <td class="whitespace-nowrap px-2 py-2"><%= log.work_date.strftime("%d/%m/%Y") %></td>
+                <td class="whitespace-nowrap px-2 py-2"><%= log.start_time.strftime("%I:%M %p") %></td>
+                <td class="whitespace-nowrap px-2 py-2"><%= log.end_time.strftime("%I:%M %p") %></td>
+                <td class="px-2 py-2"><%= log.fabricator_name %></td>
+                <td class="px-2 py-2"><%= log.note.presence || "-" %></td>
+                <td class="px-2 py-2 text-right">
+                  <%= button_to "Delete",
+                      admin_job_job_process_fabrication_log_path(job, process, log),
+                      method: :delete,
+                      form_class: "inline-block",
+                      class: "cursor-pointer text-sm font-semibold text-red-700 hover:text-red-900",
+                      data: { turbo_confirm: "Delete this fabrication log?" } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="mt-3 text-sm text-slate-500">No fabrication logs recorded.</p>
+    <% end %>
+  </div>
+<% end %>

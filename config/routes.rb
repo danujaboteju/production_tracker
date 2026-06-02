@@ -10,6 +10,8 @@ Rails.application.routes.draw do
       end
 
       resources :job_processes, only: [] do
+        resources :fabrication_logs, only: [:create, :destroy]
+
         member do
           patch :start
           patch :complete

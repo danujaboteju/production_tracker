@@ -1,5 +1,6 @@
 class JobProcess < ApplicationRecord
   belongs_to :job
+  has_many :fabrication_logs, dependent: :destroy
 
   PROCESS_OPTIONS = {
     "PRODRAFT" => "Drafting",
