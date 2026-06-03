@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_21_023501) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_02_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -38,6 +38,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_023501) do
     t.index ["ts"], name: "idx_events_ts", order: :desc
     t.index ["ts"], name: "index_events_on_ts"
     t.index ["type"], name: "index_events_on_type"
+  end
+
+  create_table "fabrication_logs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.time "end_time"
+    t.string "fabricator_name", null: false
+    t.bigint "job_process_id", null: false
+    t.text "note"
+    t.time "start_time", null: false
+    t.datetime "updated_at", null: false
+    t.date "work_date", null: false
+    t.index ["job_process_id"], name: "index_fabrication_logs_on_job_process_id"
   end
 
   create_table "job_processes", force: :cascade do |t|
@@ -93,5 +105,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_023501) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "fabrication_logs", "job_processes"
   add_foreign_key "job_processes", "jobs"
 end
