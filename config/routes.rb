@@ -3,6 +3,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     get "pipeline", to: "pipeline#index"
+    resources :fabricators, only: [:index, :create, :edit, :update]
 
     resources :jobs, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
       member do

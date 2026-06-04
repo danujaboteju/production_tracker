@@ -6,13 +6,16 @@
         <p class="mt-1 text-slate-600">Admin Job Pipeline</p>
       </div>
 
-      <div class="flex gap-2">
-        <%= link_to "Pipeline", admin_pipeline_path,
-            class: "rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700" %>
+<div class="flex flex-wrap gap-2">
+  <%= link_to "Fabricators / Welders", admin_fabricators_path,
+      class: "rounded-lg bg-slate-800 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-900" %>
 
-        <%= link_to "Create New Job", new_admin_job_path,
-            class: "rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" %>
-      </div>
+  <%= link_to "Pipeline", admin_pipeline_path,
+      class: "rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700" %>
+
+  <%= link_to "Create New Job", new_admin_job_path,
+      class: "rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" %>
+</div>
     </div>
 
     <% if notice.present? %>

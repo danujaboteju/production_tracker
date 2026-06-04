@@ -5,7 +5,12 @@ module Admin
     before_action :ensure_stage_four_process
 
     def create
-      fabrication_log = @job_process.fabrication_logs.new(fabrication_log_params)
+      fabrication_log = @job_process.fabrication_logs.new(fabrication_log_params.merge(work_type: "PROD", other_job_name: nil))
+
+      unless Fabricator.active.exists?(id: fabrication_log.fabricator_id)
+        redirect_to admin_job_path(@job), alert: "Fabricator / Welder must be active."
+        return
+      end
 
       if fabrication_log.save
         redirect_to admin_job_path(@job), notice: "Fabrication log added successfully."
@@ -16,8 +21,9 @@ module Admin
 
     def update
       fabrication_log = @job_process.fabrication_logs.find(params[:id])
+      fabrication_log.assign_attributes(fabrication_log_params.merge(work_type: "PROD", other_job_name: nil))
 
-      if fabrication_log.update(fabrication_log_params)
+      if fabrication_log.save
         redirect_to admin_job_path(@job), notice: "Fabrication log updated successfully."
       else
         redirect_to admin_job_path(@job), alert: fabrication_log.errors.full_messages.to_sentence
@@ -51,7 +57,7 @@ module Admin
         :work_date,
         :start_time,
         :end_time,
-        :fabricator_name,
+        :fabricator_id,
         :note
       )
     end

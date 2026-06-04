@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_02_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_04_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -43,13 +43,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_010000) do
   create_table "fabrication_logs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.time "end_time"
-    t.string "fabricator_name", null: false
-    t.bigint "job_process_id", null: false
+    t.bigint "fabricator_id", null: false
+    t.bigint "job_process_id"
     t.text "note"
+    t.string "other_job_name"
     t.time "start_time", null: false
     t.datetime "updated_at", null: false
     t.date "work_date", null: false
+    t.string "work_type", null: false
+    t.index ["fabricator_id"], name: "index_fabrication_logs_on_fabricator_id"
     t.index ["job_process_id"], name: "index_fabrication_logs_on_job_process_id"
+    t.index ["work_date"], name: "index_fabrication_logs_on_work_date"
+    t.index ["work_type"], name: "index_fabrication_logs_on_work_type"
+  end
+
+  create_table "fabricators", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_fabricators_on_lower_name", unique: true
   end
 
   create_table "job_processes", force: :cascade do |t|
@@ -105,6 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_010000) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "fabrication_logs", "fabricators"
   add_foreign_key "fabrication_logs", "job_processes"
   add_foreign_key "job_processes", "jobs"
 end

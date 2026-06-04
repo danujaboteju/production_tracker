@@ -113,7 +113,7 @@ module Admin
     private
 
     def set_job
-      @job = Job.includes(job_processes: :fabrication_logs).find(params[:id])
+      @job = Job.includes(job_processes: { fabrication_logs: :fabricator }).find(params[:id])
     end
 
     def job_params
