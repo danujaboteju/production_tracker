@@ -57,6 +57,7 @@ module Admin
     end
 
     def show
+      @active_fabricators = Fabricator.active.assigned_to_operation("PROFAB")
     end
 
     def edit

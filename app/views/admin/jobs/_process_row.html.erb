@@ -99,7 +99,7 @@
 
 <% open_log = process.fabrication_logs.open.ordered.first %>
 <% log_form = open_log || FabricationLog.new(work_date: Date.current, work_type: "PROD") %>
-<% fabricator_options = Array(@active_fabricators || Fabricator.active) %>
+<% fabricator_options = Array(@active_fabricators || Fabricator.active.assigned_to_operation("PROFAB")) %>
 <% if log_form.fabricator.present? && fabricator_options.exclude?(log_form.fabricator) %>
   <% fabricator_options = (fabricator_options + [log_form.fabricator]).sort_by { |fabricator| fabricator.name.downcase } %>
 <% end %>
@@ -121,7 +121,7 @@
   </div>
 
   <div>
-    <%= form.label :fabricator_id, "Fabricator / Welder", class: "block text-xs font-semibold text-slate-600" %>
+    <%= form.label :fabricator_id, "Team Member", class: "block text-xs font-semibold text-slate-600" %>
     <%= form.collection_select :fabricator_id, fabricator_options, :id, :name, { prompt: "Select" }, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-2 py-2 text-sm" %>
   </div>
 
@@ -142,7 +142,7 @@
               <th class="px-2 py-2">Date</th>
               <th class="px-2 py-2">Start Time</th>
               <th class="px-2 py-2">End Time</th>
-              <th class="px-2 py-2">Fabricator / Welder</th>
+              <th class="px-2 py-2">Team Member</th>
               <th class="px-2 py-2">Note</th>
               <th class="px-2 py-2 text-right"></th>
             </tr>

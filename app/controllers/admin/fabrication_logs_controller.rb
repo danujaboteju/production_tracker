@@ -7,8 +7,8 @@ module Admin
     def create
       fabrication_log = @job_process.fabrication_logs.new(fabrication_log_params.merge(work_type: "PROD", other_job_name: nil))
 
-      unless Fabricator.active.exists?(id: fabrication_log.fabricator_id)
-        redirect_to admin_job_path(@job), alert: "Fabricator / Welder must be active."
+      unless profab_team_member?(fabrication_log.fabricator_id)
+        redirect_to admin_job_path(@job), alert: "Team Member must be active and assigned to PROFAB."
         return
       end
 
@@ -21,7 +21,13 @@ module Admin
 
     def update
       fabrication_log = @job_process.fabrication_logs.find(params[:id])
+      original_fabricator_id = fabrication_log.fabricator_id
       fabrication_log.assign_attributes(fabrication_log_params.merge(work_type: "PROD", other_job_name: nil))
+
+      unless fabrication_log.fabricator_id == original_fabricator_id || profab_team_member?(fabrication_log.fabricator_id)
+        redirect_to admin_job_path(@job), alert: "Team Member must be active and assigned to PROFAB."
+        return
+      end
 
       if fabrication_log.save
         redirect_to admin_job_path(@job), notice: "Fabrication log updated successfully."
@@ -60,6 +66,10 @@ module Admin
         :fabricator_id,
         :note
       )
+    end
+
+    def profab_team_member?(fabricator_id)
+      Fabricator.active.assigned_to_operation("PROFAB").exists?(id: fabricator_id)
     end
   end
 end

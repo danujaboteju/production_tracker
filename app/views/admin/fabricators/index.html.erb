@@ -1,10 +1,10 @@
 <div class="min-h-screen bg-slate-100 p-6">
-  <div class="mx-auto max-w-5xl">
+  <div class="mx-auto max-w-6xl">
     <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
         <%= link_to "&larr; Back to Jobs".html_safe, admin_jobs_path,
             class: "text-sm font-semibold text-blue-700 hover:text-blue-900" %>
-        <h1 class="mt-3 text-3xl font-bold text-slate-900">Fabricators / Welders</h1>
+        <h1 class="mt-3 text-3xl font-bold text-slate-900">Team Members</h1>
       </div>
     </div>
 
@@ -27,15 +27,28 @@
     <% end %>
 
     <div class="mb-6 rounded-xl bg-white p-5 shadow">
-      <h2 class="text-lg font-bold text-slate-900">Add Fabricator / Welder</h2>
+      <h2 class="text-lg font-bold text-slate-900">Add Team Member</h2>
 
-      <%= form_with model: [:admin, @fabricator], local: true, class: "mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end" do |form| %>
+      <%= form_with model: [:admin, @fabricator], local: true, class: "mt-4 space-y-4" do |form| %>
         <div>
           <%= form.label :name, "Name", class: "block text-xs font-semibold text-slate-600" %>
           <%= form.text_field :name, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
         </div>
 
         <%= form.hidden_field :active, value: true %>
+
+        <fieldset>
+          <legend class="block text-xs font-semibold text-slate-600">Assigned Operations</legend>
+          <div class="mt-2 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            <% @operation_options.each do |code, name| %>
+              <label class="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <%= check_box_tag "fabricator[operation_codes][]", code, false, id: "fabricator_operation_codes_#{code}", class: "mt-0.5 h-4 w-4 rounded border-slate-300" %>
+                <span><%= code %> &mdash; <%= name %></span>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+
         <%= form.submit "Add", class: "cursor-pointer rounded-md bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
       <% end %>
     </div>
@@ -46,12 +59,14 @@
           <tr>
             <th class="px-4 py-3 text-left text-sm font-semibold">Name</th>
             <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold">Assigned Operations</th>
             <th class="px-4 py-3 text-right text-sm font-semibold">Action</th>
           </tr>
         </thead>
 
         <tbody class="divide-y divide-slate-200">
           <% @fabricators.each do |fabricator| %>
+            <% assigned_codes = fabricator.fabricator_operations.map(&:operation_code).sort %>
             <tr class="hover:bg-slate-50">
               <td class="px-4 py-3 font-semibold text-slate-900"><%= fabricator.name %></td>
               <td class="px-4 py-3">
@@ -59,6 +74,17 @@
                   <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">Active</span>
                 <% else %>
                   <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">Inactive</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-700">
+                <% if assigned_codes.any? %>
+                  <div class="flex flex-wrap gap-1.5">
+                    <% assigned_codes.each do |code| %>
+                      <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700" title="<%= JobProcess::PROCESS_OPTIONS[code] %>"><%= code %></span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-slate-400">None</span>
                 <% end %>
               </td>
               <td class="px-4 py-3 text-right">
@@ -70,7 +96,7 @@
 
           <% if @fabricators.empty? %>
             <tr>
-              <td colspan="3" class="px-4 py-8 text-center text-slate-500">No fabricators or welders added yet.</td>
+              <td colspan="4" class="px-4 py-8 text-center text-slate-500">No team members added yet.</td>
             </tr>
           <% end %>
         </tbody>

@@ -4,6 +4,7 @@ module Admin
   class FabricationLogsControllerTest < ActionDispatch::IntegrationTest
     setup do
       @fabricator = Fabricator.create!(name: "Controller Welder")
+        @fabricator.fabricator_operations.create!(operation_code: "PROFAB")
       @job = Job.create!(job_no: "CTL-#{SecureRandom.hex(4)}", customer_name: "Laser Link", due_date: Date.current, status: "Draft")
       @job_process = @job.job_processes.create!(process_code: "PROFAB", status: "Draft")
     end
