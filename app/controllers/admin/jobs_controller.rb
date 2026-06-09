@@ -3,19 +3,31 @@ module Admin
     before_action :set_job, only: [:show, :edit, :update, :release, :destroy]
 
     def index
-      @status = params[:status].presence
+      @status = params[:status].presence || "In Progress"
       @status_tabs = [
-        ["All Jobs", nil],
+        ["All Jobs", "All"],
         ["Released", "Released"],
         ["In Progress", "In Progress"],
         ["On Hold", "On Hold"],
         ["Completed", "Completed"]
       ]
+
       @status_counts = Job.group(:status).count
       @all_jobs_count = Job.count
 
-      @jobs = Job.includes(:job_processes).order(created_at: :desc)
-      @jobs = @jobs.where(status: @status) if @status.present?
+      @jobs = Job.includes(:job_processes)
+      @jobs = @jobs.where(status: @status) unless @status == "All"
+
+      @jobs =
+        if @status == "In Progress"
+          @jobs
+            .left_joins(:job_processes)
+            .select("jobs.*")
+            .group("jobs.id")
+            .order(Arel.sql(progress_order_sql))
+        else
+          @jobs.order(created_at: :desc)
+        end
     end
 
     def new
@@ -141,6 +153,20 @@ module Admin
 
     def manual_job_status?
       params.dig(:job, :status).in?(["On Hold", "Completed", "Cancelled"])
+    end
+
+    def progress_order_sql
+      completed_count_sql = "SUM(CASE WHEN job_processes.status = 'Completed' THEN 1 ELSE 0 END)"
+      total_count_sql = "COUNT(job_processes.id)"
+
+      <<~SQL.squish
+        CASE
+          WHEN #{total_count_sql} = 0 THEN 0
+          ELSE #{completed_count_sql}::float / #{total_count_sql}
+        END ASC,
+        jobs.created_at DESC,
+        jobs.id ASC
+      SQL
     end
 
     def sync_job_processes(job, process_codes)

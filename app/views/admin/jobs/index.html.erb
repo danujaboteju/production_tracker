@@ -6,19 +6,19 @@
         <p class="mt-1 text-slate-600">Admin Job Pipeline</p>
       </div>
 
-<div class="flex flex-wrap gap-2">
-  <%= link_to "PROFAB", admin_profab_path,
-      class: "rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800" %>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to "PROFAB", admin_profab_path,
+            class: "rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800" %>
 
-  <%= link_to "Team Members", admin_fabricators_path,
-      class: "rounded-lg bg-slate-800 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-900" %>
+        <%= link_to "Team Members", admin_fabricators_path,
+            class: "rounded-lg bg-slate-800 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-900" %>
 
-  <%= link_to "Pipeline", admin_pipeline_path,
-      class: "rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700" %>
+        <%= link_to "Pipeline", admin_pipeline_path,
+            class: "rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700" %>
 
-  <%= link_to "Create New Job", new_admin_job_path,
-      class: "rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" %>
-</div>
+        <%= link_to "Create New Job", new_admin_job_path,
+            class: "rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" %>
+      </div>
     </div>
 
     <% if notice.present? %>
@@ -33,22 +33,24 @@
       </div>
     <% end %>
 
-<div class="mb-4 rounded-xl bg-white p-3 shadow">
-  <div class="flex flex-wrap gap-2">
-    <% @status_tabs.each do |label, status| %>
-      <% active = @status.to_s == status.to_s %>
-      <% count = status.present? ? @status_counts.fetch(status, 0) : @all_jobs_count %>
+    <div class="mb-4 rounded-xl bg-white p-3 shadow">
+      <div class="flex flex-wrap gap-2">
+        <% @status_tabs.each do |label, status| %>
+          <% is_all_tab = status.blank? || status == "All" %>
+          <% link_status = is_all_tab ? "All" : status %>
+          <% active = is_all_tab ? @status == "All" : @status.to_s == status.to_s %>
+          <% count = is_all_tab ? @all_jobs_count : @status_counts.fetch(status, 0) %>
 
-      <%= link_to admin_jobs_path(status: status),
-          class: "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold #{active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" do %>
-        <span><%= label %></span>
-        <span class="rounded-full px-2 py-0.5 text-xs <%= active ? 'bg-white/20 text-white' : 'bg-white text-slate-600' %>">
-          <%= count %>
-        </span>
-      <% end %>
-    <% end %>
-  </div>
-</div>
+          <%= link_to admin_jobs_path(status: link_status),
+              class: "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold #{active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" do %>
+            <span><%= label %></span>
+            <span class="rounded-full px-2 py-0.5 text-xs <%= active ? 'bg-white/20 text-white' : 'bg-white text-slate-600' %>">
+              <%= count %>
+            </span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
 
     <div class="overflow-hidden rounded-xl bg-white shadow">
       <table class="min-w-full divide-y divide-slate-200">
@@ -90,6 +92,7 @@
                 <% total_count = processes.size %>
                 <% progress_percent = total_count.positive? ? ((completed_count.to_f / total_count) * 100).round : 0 %>
                 <% current_process = processes.find { |process| !process.status.in?(["Completed", "Cancelled"]) } %>
+
                 <% current_text =
                   if job.status == "Completed"
                     "Completed"
@@ -101,6 +104,7 @@
                     "Current: No processes"
                   end
                 %>
+
                 <% process_labels = {
                   "PRODRAFT" => "Draft",
                   "PROCUT" => "Cut",
@@ -184,19 +188,38 @@
           <% if @jobs.empty? %>
             <tr>
               <td colspan="6" class="px-4 py-8 text-center text-slate-500">
-                No jobs created yet.
+                No jobs found.
               </td>
             </tr>
           <% end %>
         </tbody>
-
       </table>
+
       <div class="flex flex-wrap gap-4 px-4 py-3 text-xs text-slate-600">
-        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-green-500"></span>Green = Completed</span>
-        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-yellow-400"></span>Yellow = In Progress</span>
-        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-slate-200"></span>Grey = Pending</span>
-        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-red-500"></span>Red = Cancelled</span>
-        <span class="inline-flex items-center gap-1.5"><span class="h-2 w-5 rounded-full bg-blue-500"></span>Blue = On Hold</span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-5 rounded-full bg-green-500"></span>
+          Green = Completed
+        </span>
+
+        <span class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-5 rounded-full bg-yellow-400"></span>
+          Yellow = In Progress
+        </span>
+
+        <span class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-5 rounded-full bg-slate-200"></span>
+          Grey = Pending
+        </span>
+
+        <span class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-5 rounded-full bg-red-500"></span>
+          Red = Cancelled
+        </span>
+
+        <span class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-5 rounded-full bg-blue-500"></span>
+          Blue = On Hold
+        </span>
       </div>
     </div>
   </div>

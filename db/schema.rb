@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_04_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_05_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -55,6 +55,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_000000) do
     t.index ["job_process_id"], name: "index_fabrication_logs_on_job_process_id"
     t.index ["work_date"], name: "index_fabrication_logs_on_work_date"
     t.index ["work_type"], name: "index_fabrication_logs_on_work_type"
+  end
+
+  create_table "fabricator_operations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "fabricator_id", null: false
+    t.string "operation_code", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fabricator_id", "operation_code"], name: "idx_on_fabricator_id_operation_code_e0d04315dc", unique: true
+    t.index ["fabricator_id"], name: "index_fabricator_operations_on_fabricator_id"
+    t.index ["operation_code"], name: "index_fabricator_operations_on_operation_code"
   end
 
   create_table "fabricators", force: :cascade do |t|
@@ -120,5 +130,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_000000) do
 
   add_foreign_key "fabrication_logs", "fabricators"
   add_foreign_key "fabrication_logs", "job_processes"
+  add_foreign_key "fabricator_operations", "fabricators"
   add_foreign_key "job_processes", "jobs"
 end
