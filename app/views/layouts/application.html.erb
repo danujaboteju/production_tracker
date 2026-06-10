@@ -24,6 +24,13 @@
   </head>
 
   <body>
+    <% if authenticated? && current_user&.admin? %>
+      <div class="bg-slate-900 px-5 py-2 text-right text-sm text-white">
+        <span class="mr-3"><%= current_user.username %></span>
+        <%= button_to "Log out", session_path, method: :delete, class: "inline rounded bg-slate-700 px-3 py-1 font-semibold hover:bg-slate-600" %>
+      </div>
+    <% end %>
+
     <main class="container mx-auto mt-28 px-5 flex">
       <%= yield %>
     </main>

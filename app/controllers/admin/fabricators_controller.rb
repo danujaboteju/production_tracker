@@ -1,5 +1,5 @@
 module Admin
-  class FabricatorsController < ApplicationController
+  class FabricatorsController < BaseController
     before_action :set_fabricator, only: [:edit, :update]
     before_action :set_operation_options, only: [:index, :create, :edit, :update]
 

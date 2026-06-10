@@ -1,5 +1,5 @@
 module Admin
-  class ProcessLogEntriesController < ApplicationController
+  class ProcessLogEntriesController < BaseController
     include ProcessLogging
 
     before_action :set_process_logging_config
@@ -73,10 +73,19 @@ module Admin
     def eligible_process_for(job_id)
       return if job_id.blank?
 
-      JobProcess
+      base_scope = JobProcess
         .joins(:job)
-        .where(job_id: job_id, process_code: @process_code, jobs: { status: "In Progress" })
+        .where(job_id: job_id, process_code: @process_code)
+
+      in_progress_processes = base_scope
+        .where(jobs: { status: "In Progress" })
         .where.not(status: ["Completed", "Cancelled"])
+
+      completed_processes = base_scope
+        .where(status: "Completed", jobs: { status: "Completed" })
+
+      in_progress_processes
+        .or(completed_processes)
         .order(:id)
         .first
     end
@@ -92,9 +101,6 @@ module Admin
         fabrication_log.errors.add(:base, "Selected job is no longer eligible for #{@process_code} logging")
       end
 
-      if attrs[:work_type] == "Other" && !profab?
-        fabrication_log.errors.add(:work_type, "is only available on PROFAB logs")
-      end
 
       fabrication_log.errors.empty?
     end
@@ -107,13 +113,9 @@ module Admin
     end
 
     def process_logs
-      if profab?
-        FabricationLog
-          .left_outer_joins(:job_process)
-          .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
-      else
-        FabricationLog.joins(:job_process).where(job_processes: { process_code: @process_code })
-      end
+      FabricationLog
+        .left_outer_joins(:job_process)
+        .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
     end
 
     def profab?

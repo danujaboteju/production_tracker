@@ -53,7 +53,7 @@
         </fieldset>
 
         <div class="md:col-span-2 lg:col-span-2" data-profab-log-form-target="prodField">
-          <%= form.label :job_id, "Job (In Progress)", class: "block text-xs font-semibold text-slate-600" %>
+          <%= form.label :job_id, "Job", class: "block text-xs font-semibold text-slate-600" %>
           <%= select_tag "fabrication_log[job_id]", options_from_collection_for_select(@eligible_jobs, :id, ->(job) { "#{job.job_no} - #{job.customer_name}" }), prompt: "Select job", class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
         </div>
 
@@ -201,7 +201,7 @@
                         </fieldset>
 
                         <div class="md:col-span-2 lg:col-span-2" data-profab-log-form-target="prodField">
-                          <%= form.label :job_id, "Job (In Progress)", class: "block text-xs font-semibold text-slate-600" %>
+                          <%= form.label :job_id, "Job", class: "block text-xs font-semibold text-slate-600" %>
                           <%= select_tag "fabrication_log[job_id]", options_from_collection_for_select(@eligible_jobs, :id, ->(job) { "#{job.job_no} - #{job.customer_name}" }, log_job&.id), prompt: "Select job", class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
                         </div>
 

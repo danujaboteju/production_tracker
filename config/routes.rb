@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root "admin/jobs#index"
 
+  resource :session, only: [:new, :create, :destroy]
+
   namespace :admin do
     get "pipeline", to: "pipeline#index"
     process_log_routes = {

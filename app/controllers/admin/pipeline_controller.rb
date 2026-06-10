@@ -1,5 +1,5 @@
 module Admin
-  class PipelineController < ApplicationController
+  class PipelineController < BaseController
     def index
       @process_options = JobProcess::PROCESS_OPTIONS
 

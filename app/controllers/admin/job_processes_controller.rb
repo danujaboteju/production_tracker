@@ -1,5 +1,5 @@
 module Admin
-  class JobProcessesController < ApplicationController
+  class JobProcessesController < BaseController
     before_action :set_job
     before_action :set_job_process
 

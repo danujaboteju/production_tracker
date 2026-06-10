@@ -1,5 +1,5 @@
 module Admin
-  class FabricationLogsController < ApplicationController
+  class FabricationLogsController < BaseController
     before_action :set_job
     before_action :set_job_process
     before_action :ensure_stage_four_process

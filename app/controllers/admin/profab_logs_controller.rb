@@ -1,5 +1,5 @@
 module Admin
-  class ProfabLogsController < ApplicationController
+  class ProfabLogsController < BaseController
     def create
       fabrication_log = FabricationLog.new
       attrs = assign_log_attributes(fabrication_log)

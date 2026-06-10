@@ -1,5 +1,5 @@
 module Admin
-  class ProfabController < ApplicationController
+  class ProfabController < BaseController
     def index
       @filter_alert = nil
       @work_date = parse_filter_date

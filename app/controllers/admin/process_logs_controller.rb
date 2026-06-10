@@ -1,5 +1,5 @@
 module Admin
-  class ProcessLogsController < ApplicationController
+  class ProcessLogsController < BaseController
     include ProcessLogging
 
     before_action :set_process_logging_config
@@ -10,7 +10,7 @@ module Admin
       @selected_month = params[:month].presence
       @filter_month_range = parse_filter_month
       @fabrication_log = FabricationLog.new(work_date: @work_date, work_type: "PROD")
-      @work_types = profab? ? FabricationLog::WORK_TYPES : ["PROD"]
+      @work_types = FabricationLog::WORK_TYPES
       @active_fabricators = active_process_fabricators
       @eligible_jobs = eligible_jobs
       @filter_jobs = filter_jobs
@@ -52,10 +52,19 @@ module Admin
     end
 
     def eligible_jobs
-      Job
+      base_scope = Job
         .joins(:job_processes)
-        .where(status: "In Progress", job_processes: { process_code: @process_code })
+        .where(job_processes: { process_code: @process_code })
+
+      in_progress_jobs = base_scope
+        .where(status: "In Progress")
         .where.not(job_processes: { status: ["Completed", "Cancelled"] })
+
+      completed_jobs = base_scope
+        .where(status: "Completed", job_processes: { status: "Completed" })
+
+      in_progress_jobs
+        .or(completed_jobs)
         .distinct
         .order(:job_no)
     end
@@ -90,13 +99,8 @@ module Admin
     end
 
     def logged_fabricator_ids
-      scope = if profab?
-        FabricationLog.left_outer_joins(:job_process)
-          .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
-      else
-        FabricationLog.joins(:job_process)
-          .where(job_processes: { process_code: @process_code })
-      end
+      scope = FabricationLog.left_outer_joins(:job_process)
+        .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
 
       scope.pluck(:fabricator_id).compact.uniq
     end
@@ -116,15 +120,9 @@ module Admin
     def process_log_scope
       scope = FabricationLog.includes(:fabricator, job_process: :job)
 
-      if profab?
-        scope
-          .left_outer_joins(:job_process)
-          .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
-      else
-        scope
-          .joins(:job_process)
-          .where(job_processes: { process_code: @process_code })
-      end
+      scope
+        .left_outer_joins(:job_process)
+        .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
     end
 
     def filter_date_scope

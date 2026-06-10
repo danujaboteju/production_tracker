@@ -1,5 +1,5 @@
 module Admin
-  class JobsController < ApplicationController
+  class JobsController < BaseController
     before_action :set_job, only: [:show, :edit, :update, :release, :destroy]
 
     def index
