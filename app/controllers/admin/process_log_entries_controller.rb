@@ -73,19 +73,11 @@ module Admin
     def eligible_process_for(job_id)
       return if job_id.blank?
 
-      base_scope = JobProcess
+      JobProcess
         .joins(:job)
         .where(job_id: job_id, process_code: @process_code)
-
-      in_progress_processes = base_scope
-        .where(jobs: { status: "In Progress" })
-        .where.not(status: ["Completed", "Cancelled"])
-
-      completed_processes = base_scope
-        .where(status: "Completed", jobs: { status: "Completed" })
-
-      in_progress_processes
-        .or(completed_processes)
+        .where(jobs: { status: ["In Progress", "On Hold", "Completed"] })
+        .where.not(status: "Cancelled")
         .order(:id)
         .first
     end

@@ -53,11 +53,13 @@
   </div>
 
   <div class="rounded-xl bg-white p-6 shadow">
+    <% processes_locked = job.persisted? && job.status != "Draft" %>
+
     <h2 class="mb-4 text-xl font-bold text-slate-900">Required Processes</h2>
 
-    <% if job.persisted? && job.status != "Draft" %>
+    <% if processes_locked %>
       <div class="mb-4 rounded-lg bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-        This job has already been released. Changing processes now may affect the production pipeline.
+        This job has already been released. Processes are locked so existing production records stay unchanged.
       </div>
     <% end %>
 
@@ -67,6 +69,7 @@
           <%= check_box_tag "process_codes[]",
               code,
               @selected_process_codes&.include?(code),
+              disabled: processes_locked,
               class: "h-5 w-5 rounded border-slate-300 text-blue-600" %>
 
           <div>

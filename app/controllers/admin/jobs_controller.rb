@@ -94,7 +94,7 @@ module Admin
         @job.complete!
       else
         ActiveRecord::Base.transaction do
-          @job.update!(job_params)
+          @job.update!(update_job_params)
           sync_job_processes(@job, @selected_process_codes) if syncing_processes?
         end
       end
@@ -144,11 +144,20 @@ module Admin
     end
 
     def syncing_processes?
-      params.dig(:job, :job_no).present? || params.key?(:process_codes)
+      @job&.status == "Draft" && params.key?(:process_codes)
     end
 
     def status_only_update?
-      params.dig(:job, :status).present? && !syncing_processes?
+      params.dig(:job, :status).present? && !job_detail_update? && !syncing_processes?
+    end
+
+    def job_detail_update?
+      job_payload = params[:job] || {}
+      ["job_no", "customer_name", "due_date", "notes"].any? { |key| job_payload.key?(key) }
+    end
+
+    def update_job_params
+      status_only_update? ? job_params : job_params.except(:status)
     end
 
     def manual_job_status?

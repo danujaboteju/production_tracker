@@ -186,7 +186,7 @@
                   <%= link_to "Open", admin_job_path(job),
                       class: "rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
 
-                  <% if job.status == "Draft" %>
+                  <% if job.status.in?(["Draft", "Released", "In Progress"]) %>
                     <%= link_to "Edit", edit_admin_job_path(job),
                         class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
                   <% end %>

@@ -52,19 +52,11 @@ module Admin
     end
 
     def eligible_jobs
-      base_scope = Job
+      Job
         .joins(:job_processes)
         .where(job_processes: { process_code: @process_code })
-
-      in_progress_jobs = base_scope
-        .where(status: "In Progress")
-        .where.not(job_processes: { status: ["Completed", "Cancelled"] })
-
-      completed_jobs = base_scope
-        .where(status: "Completed", job_processes: { status: "Completed" })
-
-      in_progress_jobs
-        .or(completed_jobs)
+        .where(status: ["In Progress", "On Hold", "Completed"])
+        .where.not(job_processes: { status: "Cancelled" })
         .distinct
         .order(:job_no)
     end

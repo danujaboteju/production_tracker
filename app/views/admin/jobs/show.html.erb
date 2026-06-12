@@ -90,10 +90,12 @@
                 class: "cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
           <% end %>
 
-          <% if @job.status == "Draft" %>
+          <% if @job.status.in?(["Draft", "Released", "In Progress"]) %>
             <%= link_to "Edit Job", edit_admin_job_path(@job),
                 class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
+          <% end %>
 
+          <% if @job.status == "Draft" %>
             <%= button_to "Release Job",
                 release_admin_job_path(@job),
                 method: :patch,
