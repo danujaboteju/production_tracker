@@ -106,8 +106,8 @@ module Admin
 
     def process_logs
       FabricationLog
-        .left_outer_joins(:job_process)
-        .where("job_processes.process_code = ? OR fabrication_logs.job_process_id IS NULL", @process_code)
+        .joins(:job_process)
+        .where(job_processes: { process_code: @process_code })
     end
 
     def profab?
@@ -121,7 +121,11 @@ module Admin
     def process_return_to_path(date:)
       return_to = params[:return_to].to_s
       process_path = process_log_index_path
-      return return_to if return_to == process_path || return_to.start_with?("#{process_path}?")
+      production_logs_path = helpers.admin_production_logs_path
+
+      if return_to == process_path || return_to.start_with?("#{process_path}?") || return_to == production_logs_path || return_to.start_with?("#{production_logs_path}?")
+        return return_to
+      end
 
       process_log_index_path(date: date)
     end

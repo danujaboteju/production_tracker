@@ -5,6 +5,9 @@ Rails.application.routes.draw do
 
   namespace :admin do
     get "pipeline", to: "pipeline#index"
+    get "production_logs", to: "production_logs#index"
+    patch "production_logs/:id", to: "production_logs#update", as: :production_log
+
     process_log_routes = {
       profab: "PROFAB",
       procut: "PROCUT",

@@ -86,54 +86,14 @@
       <% end %>
     </div>
 
-    <div class="mb-6 rounded-xl bg-white p-5 shadow">
-      <h2 class="text-lg font-bold text-slate-900">Filter Logs</h2>
-
-      <%= form_with url: public_send("admin_#{@process_slug}_path"), method: :get, local: true, class: "mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-[10rem_10rem_1fr_1fr_auto_auto] lg:items-end" do %>
-        <div>
-          <%= label_tag :date, "Date", class: "block text-xs font-semibold text-slate-600" %>
-          <%= date_field_tag :date, @work_date, class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-        </div>
-
-        <div>
-          <%= label_tag :month, "Month", class: "block text-xs font-semibold text-slate-600" %>
-          <%= month_field_tag :month, @selected_month, class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-        </div>
-
-        <div>
-          <%= label_tag :job_id, "Job", class: "block text-xs font-semibold text-slate-600" %>
-          <%= select_tag :job_id,
-              options_from_collection_for_select(@filter_jobs, :id, ->(job) { "#{job.job_no} - #{job.customer_name}" }, @selected_job_id),
-              prompt: "All Jobs",
-              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-        </div>
-
-        <div>
-          <%= label_tag :fabricator_id, "Operator / Team Member", class: "block text-xs font-semibold text-slate-600" %>
-          <%= select_tag :fabricator_id,
-              options_from_collection_for_select(@filter_fabricators, :id, :name, @selected_fabricator_id),
-              prompt: "All Operators",
-              class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-        </div>
-
-        <%= submit_tag "Apply Filters", class: "cursor-pointer rounded-md bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900" %>
-        <%= link_to "Clear Filters", public_send("admin_#{@process_slug}_path"), class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
-      <% end %>
-    </div>
-
-    <div class="mb-4 grid gap-3 md:grid-cols-2">
-      <div class="rounded-xl bg-white p-4 shadow">
-        <div class="text-xs font-semibold uppercase text-slate-500">Total Hours</div>
-        <div class="mt-1 text-2xl font-bold text-slate-900"><%= number_with_precision(@total_hours, precision: 2) %></div>
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow">
-        <div class="text-xs font-semibold uppercase text-slate-500">Log Entries</div>
-        <div class="mt-1 text-2xl font-bold text-slate-900"><%= @log_entries %></div>
-      </div>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg font-bold text-slate-900">Recent Logs</h2>
+      <%= link_to "Production Logs", admin_production_logs_path(process_code: @process_code),
+          class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" %>
     </div>
 
     <div class="overflow-x-auto rounded-xl bg-white shadow">
+
       <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
         <thead class="bg-slate-900 text-white">
           <tr>
