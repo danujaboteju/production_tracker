@@ -98,7 +98,9 @@
             <th class="w-40 px-4 py-3 font-semibold">Team Member</th>
             <th class="w-28 px-4 py-3 font-semibold">Start Time</th>
             <th class="w-28 px-4 py-3 font-semibold">End Time</th>
-            <th class="w-24 px-4 py-3 font-semibold">Hours</th>
+            <th class="w-24 px-4 py-3 font-semibold">Gross</th>
+            <th class="w-24 px-4 py-3 font-semibold">Break</th>
+            <th class="w-24 px-4 py-3 font-semibold">Job Hours</th>
             <th class="w-64 px-4 py-3 font-semibold">Notes</th>
             <th class="w-36 px-4 py-3 font-semibold">Actions</th>
           </tr>
@@ -125,7 +127,9 @@
               <td class="px-4 py-3"><span class="block truncate" title="<%= log.fabricator.name %>"><%= log.fabricator.name %></span></td>
               <td class="whitespace-nowrap px-4 py-3"><%= log.start_time.strftime("%I:%M %p") %></td>
               <td class="whitespace-nowrap px-4 py-3"><%= log.end_time&.strftime("%I:%M %p") || "-" %></td>
-              <td class="whitespace-nowrap px-4 py-3"><%= log.duration_hours.present? ? number_with_precision(log.duration_hours, precision: 2) : "-" %></td>
+              <td class="whitespace-nowrap px-4 py-3"><%= log.gross_duration_hours.present? ? number_with_precision(log.gross_duration_hours, precision: 2) : "-" %></td>
+              <td class="whitespace-nowrap px-4 py-3"><%= log.break_duration_hours.present? ? number_with_precision(log.break_duration_hours, precision: 2) : "-" %></td>
+              <td class="whitespace-nowrap px-4 py-3 font-semibold text-slate-900"><%= log.duration_hours.present? ? number_with_precision(log.duration_hours, precision: 2) : "-" %></td>
               <td class="px-4 py-3">
                 <div class="truncate" title="<%= log.note.presence || "-" %>"><%= log.note.presence || "-" %></div>
               </td>
@@ -221,7 +225,7 @@
 
           <% if @fabrication_logs.empty? %>
             <tr>
-              <td colspan="9" class="px-4 py-8 text-center text-slate-500">
+              <td colspan="11" class="px-4 py-8 text-center text-slate-500">
                 No production logs found.
               </td>
             </tr>

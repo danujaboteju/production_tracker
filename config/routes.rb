@@ -31,6 +31,8 @@ Rails.application.routes.draw do
         patch :release
       end
 
+      resources :production_logs, only: [:create, :update, :destroy], controller: "fabrication_logs"
+
       resources :job_processes, only: [] do
         resources :fabrication_logs, only: [:create, :update, :destroy]
 

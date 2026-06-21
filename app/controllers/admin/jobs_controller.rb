@@ -70,6 +70,18 @@ module Admin
 
     def show
       @active_fabricators = Fabricator.active.assigned_to_operation("PROFAB")
+      @production_log_processes = @job.job_processes
+        .where(process_code: Admin::ProcessLogging::PROCESS_CONFIG.keys)
+        .order(:stage_no, :id)
+      @production_logs = FabricationLog
+        .joins(:job_process)
+        .includes(:fabricator, :job_process)
+        .where(job_processes: { job_id: @job.id, process_code: Admin::ProcessLogging::PROCESS_CONFIG.keys })
+        .where.not(job_process_id: nil)
+        .ordered
+        .to_a
+      @production_log = FabricationLog.new(work_date: Date.current)
+      @fabricators = Fabricator.ordered
     end
 
     def edit
