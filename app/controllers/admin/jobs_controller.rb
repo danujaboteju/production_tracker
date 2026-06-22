@@ -4,6 +4,7 @@ module Admin
 
     def index
       @status = params[:status].presence || "In Progress"
+      @q = params[:q].to_s.strip
       @status_tabs = [
         ["All Jobs", "All"],
         ["Released", "Released"],
@@ -17,6 +18,13 @@ module Admin
 
       @jobs = Job.includes(:job_processes)
       @jobs = @jobs.where(status: @status) unless @status == "All"
+      if @q.present?
+        search_term = "%#{ActiveRecord::Base.sanitize_sql_like(@q)}%"
+        @jobs = @jobs.where(
+          "jobs.job_no ILIKE :q OR jobs.customer_name ILIKE :q OR jobs.notes ILIKE :q",
+          q: search_term
+        )
+      end
 
       @jobs =
         if @status == "In Progress"
@@ -70,9 +78,7 @@ module Admin
 
     def show
       @active_fabricators = Fabricator.active.assigned_to_operation("PROFAB")
-      @production_log_processes = @job.job_processes
-        .where(process_code: Admin::ProcessLogging::PROCESS_CONFIG.keys)
-        .order(:stage_no, :id)
+      @production_log_processes = production_log_processes
       @production_logs = FabricationLog
         .joins(:job_process)
         .includes(:fabricator, :job_process)
@@ -139,6 +145,13 @@ module Admin
 
     def set_job
       @job = Job.includes(job_processes: { fabrication_logs: :fabricator }).find(params[:id])
+    end
+
+    def production_log_processes
+      @job.job_processes
+        .where(process_code: Admin::ProcessLogging::PROCESS_CONFIG.keys)
+        .where.not(status: "Cancelled")
+        .order(:stage_no, :id)
     end
 
     def job_params
