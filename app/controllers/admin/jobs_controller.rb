@@ -7,7 +7,7 @@ module Admin
       @q = params[:q].to_s.strip
       @status_tabs = [
         ["All Jobs", "All"],
-        ["Released", "Released"],
+        ["Drafted", "Draft"],
         ["In Progress", "In Progress"],
         ["On Hold", "On Hold"],
         ["Completed", "Completed"]
