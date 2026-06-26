@@ -21,6 +21,13 @@ module Admin
       end
     end
 
+    def destroy
+      fabrication_log = FabricationLog.find(params[:id])
+      fabrication_log.destroy!
+
+      redirect_to production_logs_return_to_path, notice: "Production log deleted successfully."
+    end
+
     private
 
     def load_index_data
@@ -32,6 +39,7 @@ module Admin
       @selected_fabricator_id = params[:fabricator_id].presence
 
       @process_options = PROCESS_CONFIG.keys
+      @process_filter_options = [["Other", "Other"]] + @process_options.map { |code| [code, code] }
       @jobs = Job.order(:job_no)
       @fabricators = Fabricator.includes(:fabricator_operations).ordered
       @fabricator_process_codes = @fabricators.each_with_object({}) do |fabricator, process_codes|
@@ -47,7 +55,11 @@ module Admin
 
       logs = logs.where("fabrication_logs.work_date >= ?", @date_from) if @date_from.present?
       logs = logs.where("fabrication_logs.work_date <= ?", @date_to) if @date_to.present?
-      logs = logs.where(job_processes: { process_code: @selected_process_code }) if @selected_process_code.present?
+      if @selected_process_code == "Other"
+        logs = logs.where("fabrication_logs.work_type = ? OR fabrication_logs.job_process_id IS NULL", "Other")
+      elsif @selected_process_code.present?
+        logs = logs.where(job_processes: { process_code: @selected_process_code })
+      end
       logs = logs.where(job_processes: { job_id: @selected_job_id }) if @selected_job_id.present?
       logs = logs.where(fabricator_id: @selected_fabricator_id) if @selected_fabricator_id.present?
 
@@ -60,7 +72,7 @@ module Admin
       job_id = attrs[:job_id].presence
 
       fabrication_log.assign_attributes(
-        attrs.except(:process_code, :job_id).merge(other_job_name: nil)
+        attrs.except(:process_code, :job_id, :other_job_name)
       )
 
       if process_code.present?
@@ -70,7 +82,7 @@ module Admin
       else
         fabrication_log.work_type = "Other"
         fabrication_log.job_process = nil
-        fabrication_log.other_job_name = fabrication_log.other_job_name.presence || "Other"
+        fabrication_log.other_job_name = attrs[:other_job_name].presence || fabrication_log.other_job_name.presence || "Other"
       end
     end
 
@@ -82,6 +94,7 @@ module Admin
         :fabricator_id,
         :start_time,
         :end_time,
+        :other_job_name,
         :note
       )
     end

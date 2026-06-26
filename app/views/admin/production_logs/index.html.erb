@@ -62,7 +62,7 @@
         <div>
           <%= label_tag :process_code, "Process", class: "block text-xs font-semibold text-slate-600" %>
           <%= select_tag :process_code,
-              options_for_select(@process_options, @selected_process_code),
+              options_for_select(@process_filter_options, @selected_process_code),
               prompt: "All processes",
               class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
         </div>
@@ -141,15 +141,13 @@
                     Edit
                   </button>
 
-                  <% if process_config.present? %>
-                    <%= button_to "Delete",
-                        public_send("admin_#{process_config.fetch(:slug)}_log_path", log),
-                        method: :delete,
-                        params: { return_to: request.fullpath },
-                        form_class: "inline-flex",
-                        form: { data: { turbo_confirm: "Delete this production log?" } },
-                        class: "inline-flex h-8 cursor-pointer items-center rounded-md bg-red-700 px-3 text-xs font-semibold text-white hover:bg-red-800" %>
-                  <% end %>
+                  <%= button_to "Delete",
+                      admin_production_log_path(log),
+                      method: :delete,
+                      params: { return_to: request.fullpath },
+                      form_class: "inline-flex",
+                      form: { data: { turbo_confirm: "Delete this production log?" } },
+                      class: "inline-flex h-8 cursor-pointer items-center rounded-md bg-red-700 px-3 text-xs font-semibold text-white hover:bg-red-800" %>
                 </div>
 
                 <dialog id="<%= modal_id %>" class="production-log-dialog w-[min(42rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-0 shadow-2xl">
@@ -186,7 +184,13 @@
                             options_from_collection_for_select(@jobs, :id, ->(job) { "#{job.job_no} - #{job.customer_name}" }, log_job&.id),
                             id: "fabrication_log_job_id_#{log.id}",
                             prompt: "Select job",
-                            class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+                            data: { production_log_job_select: true },
+                            class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400" %>
+                      </div>
+
+                      <div class="md:col-span-2">
+                        <%= form.label :other_job_name, "Other work name", class: "block text-xs font-semibold text-slate-600" %>
+                        <%= form.text_field :other_job_name, value: log.other_job_name, class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
                       </div>
 
                       <div class="md:col-span-2">
@@ -279,9 +283,10 @@
       var processCode = (processSelect.value || "").trim().toUpperCase();
       var options = originalOptions(teamMemberSelect);
       var blankOption = options.find(function (option) { return option.value === ""; });
+      var allTeamMemberOptions = options.filter(function (option) { return option.value !== ""; });
       var assignedOptions = processCode ? options.filter(function (option) {
         return option.value !== "" && assignedProcesses(option).indexOf(processCode) !== -1;
-      }) : [];
+      }) : allTeamMemberOptions;
 
       teamMemberSelect.replaceChildren.apply(
         teamMemberSelect,
@@ -294,6 +299,22 @@
       teamMemberSelect.value = selectedStillAvailable ? selectedValue : "";
     }
 
+    function updateJobSelect(form) {
+      var processSelect = form.querySelector("[data-production-log-process-select]");
+      var jobSelect = form.querySelector("[data-production-log-job-select]");
+
+      if (!processSelect || !jobSelect) return;
+
+      var processCode = (processSelect.value || "").trim();
+
+      if (processCode === "") {
+        jobSelect.value = "";
+        jobSelect.disabled = true;
+      } else {
+        jobSelect.disabled = false;
+      }
+    }
+
     function setupProductionLogMemberFiltering() {
       document.querySelectorAll("[data-production-log-form]").forEach(function (form) {
         var processSelect = form.querySelector("[data-production-log-process-select]");
@@ -301,7 +322,11 @@
         if (!processSelect || form.dataset.memberFilteringReady === "true") return;
 
         form.dataset.memberFilteringReady = "true";
-        processSelect.addEventListener("change", function () { filterTeamMembers(form); });
+        processSelect.addEventListener("change", function () {
+          updateJobSelect(form);
+          filterTeamMembers(form);
+        });
+        updateJobSelect(form);
         filterTeamMembers(form);
       });
     }

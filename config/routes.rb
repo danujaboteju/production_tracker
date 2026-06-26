@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     get "pipeline", to: "pipeline#index"
     get "production_logs", to: "production_logs#index"
     patch "production_logs/:id", to: "production_logs#update", as: :production_log
+    delete "production_logs/:id", to: "production_logs#destroy"
 
     process_log_routes = {
       profab: "PROFAB",
