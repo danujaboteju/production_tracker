@@ -33,7 +33,10 @@ module Admin
 
       @process_options = PROCESS_CONFIG.keys
       @jobs = Job.order(:job_no)
-      @fabricators = Fabricator.ordered
+      @fabricators = Fabricator.includes(:fabricator_operations).ordered
+      @fabricator_process_codes = @fabricators.each_with_object({}) do |fabricator, process_codes|
+        process_codes[fabricator.id] = fabricator.fabricator_operations.map(&:operation_code).sort
+      end
     end
 
     def filtered_logs

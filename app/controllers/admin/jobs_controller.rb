@@ -87,7 +87,10 @@ module Admin
         .ordered
         .to_a
       @production_log = FabricationLog.new(work_date: Date.current)
-      @fabricators = Fabricator.ordered
+      @fabricators = Fabricator.includes(:fabricator_operations).ordered
+      @fabricator_process_codes = @fabricators.each_with_object({}) do |fabricator, process_codes|
+        process_codes[fabricator.id] = fabricator.fabricator_operations.map(&:operation_code).sort
+      end
     end
 
     def edit

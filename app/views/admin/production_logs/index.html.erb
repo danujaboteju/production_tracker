@@ -161,6 +161,7 @@
                       url: admin_production_log_path(log),
                       method: :patch,
                       local: true,
+                      data: { production_log_form: true },
                       class: "p-5" do |form| %>
                     <%= hidden_field_tag :return_to, request.fullpath %>
 
@@ -175,6 +176,7 @@
                         <%= select_tag "fabrication_log[process_code]",
                             options_for_select([["Other", ""]] + @process_options.map { |code| [code, code] }, process_code),
                             id: "fabrication_log_process_code_#{log.id}",
+                            data: { production_log_process_select: true },
                             class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
                       </div>
 
@@ -189,7 +191,17 @@
 
                       <div class="md:col-span-2">
                         <%= form.label :fabricator_id, "Team Member", class: "block text-xs font-semibold text-slate-600" %>
-                        <%= form.collection_select :fabricator_id, @fabricators, :id, :name, { prompt: "Select" }, required: true, class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+                        <%
+                          fabricator_options = @fabricators.map do |fabricator|
+                            [fabricator.name, fabricator.id, { data: { processes: @fabricator_process_codes.fetch(fabricator.id, []).join(",") } }]
+                          end
+                        %>
+                        <%= form.select :fabricator_id,
+                            options_for_select(fabricator_options, log.fabricator_id),
+                            { include_blank: "Select team member" },
+                            required: true,
+                            data: { production_log_team_member_select: true },
+                            class: "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
                       </div>
 
                       <div>
@@ -235,3 +247,70 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    function assignedProcesses(option) {
+      return (option.dataset.processes || "")
+        .split(",")
+        .map(function (process) { return process.trim().toUpperCase(); })
+        .filter(Boolean);
+    }
+
+    function originalOptions(select) {
+      if (!select.productionLogOriginalOptions) {
+        select.productionLogOriginalOptions = Array.prototype.slice.call(select.options).map(function (option) {
+          return option.cloneNode(true);
+        });
+      }
+
+      return select.productionLogOriginalOptions.map(function (option) {
+        return option.cloneNode(true);
+      });
+    }
+
+    function filterTeamMembers(form) {
+      var processSelect = form.querySelector("[data-production-log-process-select]");
+      var teamMemberSelect = form.querySelector("[data-production-log-team-member-select]");
+
+      if (!processSelect || !teamMemberSelect) return;
+
+      var selectedValue = teamMemberSelect.value;
+      var processCode = (processSelect.value || "").trim().toUpperCase();
+      var options = originalOptions(teamMemberSelect);
+      var blankOption = options.find(function (option) { return option.value === ""; });
+      var assignedOptions = processCode ? options.filter(function (option) {
+        return option.value !== "" && assignedProcesses(option).indexOf(processCode) !== -1;
+      }) : [];
+
+      teamMemberSelect.replaceChildren.apply(
+        teamMemberSelect,
+        [blankOption].concat(assignedOptions).filter(Boolean)
+      );
+
+      var selectedStillAvailable = Array.prototype.some.call(teamMemberSelect.options, function (option) {
+        return option.value === selectedValue;
+      });
+      teamMemberSelect.value = selectedStillAvailable ? selectedValue : "";
+    }
+
+    function setupProductionLogMemberFiltering() {
+      document.querySelectorAll("[data-production-log-form]").forEach(function (form) {
+        var processSelect = form.querySelector("[data-production-log-process-select]");
+
+        if (!processSelect || form.dataset.memberFilteringReady === "true") return;
+
+        form.dataset.memberFilteringReady = "true";
+        processSelect.addEventListener("change", function () { filterTeamMembers(form); });
+        filterTeamMembers(form);
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupProductionLogMemberFiltering);
+    } else {
+      setupProductionLogMemberFiltering();
+    }
+  })();
+</script>
+
